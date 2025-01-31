@@ -1,0 +1,77 @@
+
+1. På hvilket språk ønskes utmatinga?
+2. Trengs det modelldiagnostikk?
+3. Skal den 
+ - estimere utdøingstid (crash.year=NULL dvs Inf) eller
+ - "returtid" (crash.year=1) eller 
+ - begge deler eller
+ - avhengig av modellen?
+4. Trengs andre tidsperspektiv for figuren enn 100 år?
+5. Ingen kovariater - korrekt?
+6. Skal figuren kunne lagres/modifiseres eller bare vises?
+7. Hvilke konfidensintervaller?
+8. Vi må bli enig om
+ - C
+ - nboot
+ - n(sim)
+ 
+...
+
+* Lineær eller logaritmisk y-akse?
+* Skal det være med tittel på datasettet?
+* Er det individer eller par/reir? (Viktig for C) [ind. for lomvi, ellers reir?]
+
+
+Det som kan varieres:
+(pva)
+- crash.prop (skal den f.eks. automatisk kjøres for et fast sett med spesifikke andeler?)
+
+
+Parametere som kan bort:
+(popmod)
+- catch=NULL
+- cov1=NULL
+- cov2=NULL
+- cov3=NULL
+- K=F
+
+
+Parametere som kan fikseres:
+(popmod)
+- sd=0.1 #  demographic variance
+- nboot=10000
+(pva)
+- C=20
+- n=10000
+
+
+Parametere som trengs:
+(popmod) ############
++ pop.size
++ years
+? nsim=0
+? name=""
+? plot=TRUE
+? se=F
+? r=F
+? b1=F
+? b2=F
+? b3=F
+? mean1=F
+? mean2=F
+? mean3=F
+? bootout=TRUE
+(pva) ############
++ model
+? crash.year=NULL
+? crash.prop=0
+? cov1=NULL
+? cov2=NULL
+? cov3=NULL
+? tmax=NULL
+? fig=100
+? fil=NULL
+? seed=NULL
+? ...
+
+

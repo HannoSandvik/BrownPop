@@ -1,8 +1,12 @@
 
-# OBS: Det er (minst!) to versjon av funksjonen i omløp.
-# Foreløpig kaller jeg dem helt vilkårlig "pva.plot" og "pva.plot2"
+# OBS: Det er to versjoner av funksjonen
+# Den opprinnelige heter pva.plot.OLD
+# (Den mangler bl.a. parameteren "tradj")
 
 # ikke rydda ennå!
+
+# Det ser ut som om funksjonen ikke trengs!
+# Den blir ikke ropt opp noe sted
 
 
 pva.plot <- function(model, pva, years, traj=100, tradj=0, log=T, C=20, CI, xlab, ylab, lwd, col, lty, ...)
@@ -51,7 +55,7 @@ for (i in 1:nrow(ci)) lines(yrsi, ci[i,], lwd=lwd[4], col=col[4], lty=lty[4])}
 
 
 
-pva.plot2 <- function(model, pva, years, traj=100, log=T, C=20, CI, xlab, ylab, lwd, col, lty, ...)
+pva.plot.OLD <- function(model, pva, years, traj=100, log=T, C=20, CI, xlab, ylab, lwd, col, lty, ...)
 {N  <- model$N[[1]]
 yr <- as.numeric(names(N))
 names(N) <- NULL

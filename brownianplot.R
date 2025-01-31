@@ -3,6 +3,7 @@
 ###############
 
 # ikke rydda ennå!
+# kanskje funksjonen kan avvikles?
 
 
 brownian.plot <- function (fit) 

@@ -8,24 +8,14 @@
 popmod <- function(pop.size, 
                    years = NULL, 
                    nboot = 10000, 
-                   name = "", 
-                   plot = TRUE, 
-                   se = F, r = F, b1 = F, b2 = F, b3 = F, 
-                   mean1 = F, mean2 = F, mean3 = F, 
-                   bootout = TRUE) {
-  # sd is demographic variance
+                   name = "") {
+  
+  sd = 0.1         # demografisk varians
+  plot <- TRUE     # kan droppes?! ¤
+  bootout <- TRUE  # kan droppes?! ¤
 
-#  catch <- NULL
-  sd = 0.1
-#  cov1 = NULL
-#  cov2 <- NULL
-#  cov3 <- NULL
-#  nsim <- 0
-  
   X <- ln(pop.size)
-  
-#¤#  if (is.vector(X)) X <- data.frame("lnN" = X)
-  
+
   na.und <- function(x) ifelse(is.na(x), 0, x)
   
   log.gauss <- function(X, my, sig2) -0.5*log(2*pi*sig2)-0.5*((X-my)^2)/sig2
@@ -79,7 +69,7 @@ popmod <- function(pop.size,
          "å log-transformere bestandstallene.\n\n")
   }
   if (any(X < 0, na.rm = T)) stop ("N kan ikke være mindre enn 1!")
-  if (length(na.omit(X)) < 6) stop ("For få år med data!")
+  if (length(unique(na.omit(X[X > 0]))) < 9) stop ("For få år med data!")
 #  if (is.null(catch)) catch <- rep(0, length(years))
 #  if (is.null(cov1))   cov1 <- rep(0, length(years))
 #  if (is.null(cov2))   cov2 <- rep(0, length(years))
@@ -90,7 +80,10 @@ popmod <- function(pop.size,
     NAS <- merge(years = min(years):max(years), NAS, all.x = T)
     years <- NAS[,1]
     X <- as.vector(NAS[, 2])
-  }
+  } #¤ rydd her! (bruk NAs? og litt enklere?)
+  
+  while (is.na(X[1]))         X <- X[-1]
+  while (is.na(X[length(X)])) X <- X[-length(X)]
   
   orig.years <- data.frame(years=min(years):max(years))
   
@@ -111,7 +104,7 @@ popmod <- function(pop.size,
   ######################### estimation of parameters
 
   estimat <- estparam(par)
-  my.est  <- se.est <- b1.est <- b2.est <- b3.est <- 0
+  my.est  <- se.est <- 0
   my.est  <-     estimat$par[1]
   se.est  <- exp(estimat$par[2])
   lnL     <-    -estimat$value
@@ -150,79 +143,53 @@ popmod <- function(pop.size,
   }
   names(pred.r) <- names(lci) <- names(uci) <- as.character(orig.years$years)
 
-  ########## simulate data based on estimated parameters
-  # NY versjon av simdat
-  # (skrevet av Hanno etter forbilde av Vidars logismodfit):
-  
-  simdat <- function() {
-    sim  <- function() {
-      erst <- min(which(!is.na(X.orig)))
-      xsim <- rep(NA,   length(X.orig))
-      xsim[erst] <- X.orig[erst]
-      for (j in erst:(length(X.orig) - 1)) {
-        xsim[j + 1] <- xsim[j] - 0.5 * sd * exp(-xsim[j]) + my.est -
-          sqrt(se.est + sd * exp(-xsim[j])) * rnorm(1)
-        if (xsim[j+1] < 0) xsim[j+1] <- 0
-      }
-      return(xsim)
-    }
-    xsim <- X.orig
-    xsim <- sim()
-    xsim[is.na(X.orig)] <- 12
-    zahl <- max(sum(!is.na(X.orig)) / 12, any(X.orig == 0, na.rm = T))
-    while (sum(xsim == 0) > zahl) {
-      xsim <- sim()
-      xsim[is.na(X.orig)] <- 12
-    }
-    xsim[is.na(X.orig)] <- NA
-    return(xsim)
-  }
-
-  simdat2 <- function() {
-    # IKKE tilpasset til logistisk modell!!!
-    # og så gir det ikke mening per nå!
-    sim <- function() {
-      erst <- min(which(!is.na(X.orig)))
-      lezt <- max(which(!is.na(X.orig)))
-      xsim <- rep(NA, length(X.orig))
-      xsim[erst] <- X.orig[lezt]
-      for (j in (lezt - 1):erst) xsim[erst] <- xsim[erst] - my.est
-      eps <- 5
-      while (eps > 0.000001) {
-        for (j in erst:(length(X.orig) - 1)) {
-          xsim[j+1] <- xsim[j] - 0.5 * sd * exp(-xsim[j]) + my.est +
-            sqrt(se.est + sd * exp(-xsim[j])) * rnorm(1)
-          if (xsim[j+1] < 0) xsim[j+1] <- 0
-        }
-        if (xsim[length(xsim)] < X.orig[length(X.orig)]) {
-          xsim[erst] <- xsim[erst] + eps
-        } else {
-          xsim[erst] <- xsim[erst] - eps
-        }
-      }
-      return(xsim)
-    }
-    xsim <- X.orig
-    xsim <- sim()
-    xsim[is.na(X.orig)] <- 12
-    zahl <- max(sum(!is.na(X.orig)) / 12, any(X.orig == 0, na.rm = T))
-    while (sum(xsim == 0) > zahl) {
-      xsim <- sim()
-      xsim[is.na(X.orig)] <- 12
-    }
-    xsim[is.na(X.orig)] <- NA
-    return(xsim)
-  }
-  
   ############################### parametric bootstrapping
 
   if (nboot > 0) {
     cat("bootstrapping\n")
     catval <- c(1, seq(0, nboot, nboot / 10))
     boottab <- matrix(NA, nboot, 2)
+    
+    simdat  <- function(i) {
+      xsim <- matrix(NA, length(i), length(X.orig))
+      xsim[, 1] <- X.orig[1]
+      for (j in 2:length(X.orig)) {
+        xsim[, j] <- xsim[, j - 1] - 0.5 * sd * exp(-xsim[, j - 1]) + my.est -
+          sqrt(se.est + sd * exp(-xsim[, j - 1])) * rnorm(length(i))
+        xsim[xsim[, j] < 0, j] <- 0
+      }
+      xsim[, is.na(X.orig)] <- NA
+      return(xsim)
+    }
+    
+#    xsim <- simdat(1:nboot)
+#    if (any(xsim == 0, na.rm = T)) {
+      # Denne rutinen sørger for å sortere ut simulerte forløp som går for fort mot 0.
+      # Men det er problematisk! Om den virkelige tidsserien når 1 individ, vil jo 
+      # mange av de simulerte forløpene også gjøre det, og halvparten av dem raskere 
+      # enn det virkelige. Disse kan ikke stenges ute. Her må jeg finne en annen løsning.
+      # Det bør holde at det er tilstrekkelig mange verdier > 0 til å estimere parameterne!
+      # ¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤
+#      nuller   <- apply(xsim == 0, 1, sum, na.rm = T) > sum(X.orig == 0, na.rm = T)
+#      while(any(nuller)) {
+#        xsim[which(nuller), ] <- simdat(which(nuller))
+#        nuller <- apply(xsim == 0, 1, sum, na.rm = T) > sum(X.orig == 0, na.rm = T)
+#      }
+#    }
+
+    # NY VERSJON:
+    xsim <- simdat(1:nboot)
+    # Om de simulerte forløpene går altfor fort mot null, blir det umulig å esti-
+    # mere parameterne. For å forebygge krøll, erstattes de av nye simuleringer:
+    nuller   <- apply(xsim > 0, 1, sum, na.rm = T) < 6
+    while(any(nuller)) {
+      xsim[which(nuller), ] <- simdat(which(nuller))
+      nuller <- apply(xsim > 0, 1, sum, na.rm = T) < 6
+    }
+
     for (j in 1:nboot) {
       if (any(j == catval)) cat("boot", j, "of", nboot, "\n")
-      X <- simdat()
+      X <- xsim[j, ]
       estimat <- estparam(par)
       boottab[j, ] <- estimat$par
     }

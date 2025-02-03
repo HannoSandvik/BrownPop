@@ -5,10 +5,10 @@
 
 
 pva <- function(model, 
-                crash.year=NULL, 
-                crash.prop=0, 
-                C=20, 
-                seed=NULL, 
+                crash.year = NULL, 
+                crash.prop = 0, 
+                C = 20, 
+                seed = NULL, 
                 ...) {
   # model: en fiks-ferdig populasjonsmodell (med bootout=TRUE!)
   # cov1-3: matriser med kovariatene (nrow=n, ncol=tmax) for fremtida
@@ -31,7 +31,8 @@ pva <- function(model,
   K <- NULL #¤
   sd <- model$sigd
   se <- model$sig2
-  last <- max(which(!is.na(N)))
+  last <- length(N)
+  lastN <- N[last]
   x   <- ln(N)
   lnC <- ln(C)
 #  if (is.null(tmax)) {
@@ -51,7 +52,7 @@ pva <- function(model,
   if (nrow(model$bootout) < n) stop("ERROR4")
   sik <- list()
   m <- matrix(0, n, max(100, fig))
-  ext <- NA
+  ext <- rec <- NA
   if (ok) {
     graphics.off()
     plot(years[last - 30:0], x[last - 30:0], 
@@ -90,7 +91,8 @@ pva <- function(model,
         }
         x[x <= C] <- 0
         kvantiler <- quantile(x, kvntl)
-        ext[t] <- sum(x < C) # number of trajectories that are extinct by time t
+        ext[t] <- sum(x <      C) # n of trajectories that  are  extinct  by time t
+        rec[t] <- sum(x >= lastN) # n of trajectories that have recovered by time t
         #          if (x[t+1] <= C) {
 #            x[t+1] <- 0
 #            alive <- F
@@ -119,14 +121,32 @@ pva <- function(model,
       cat("Sorry, the density-dependent version is not yet implemented!\n")
     }
     
-    for (i in kvntl) {
-      if (any(ext / n >= max(i, 0.000001))) {
-        lt <- min(which(ext / n >= max(i, 0.000001)))
+    utmating <- matrix("", length(kvntl), 2)
+    colnames(utmating) <- c("Levetid", "Restitueringstid")
+    rownames(utmating) <- (kvntl * 100) %+% "-persentil"
+    for (i in 1:length(kvntl)) {
+      if (any(ext / n >= max(kvntl[i], 0.000001))) {
+        lt <- min(which(ext / n >= max(kvntl[i], 0.000001)))
       } else {
-        lt <- ">1000"
+        lt <- "> 1000"
       }
-      cat("Levetidas " %+% i %+% "-persentil: " %+% lt %+% " år\n")
+      if (any(rec / n >= max(kvntl[i], 0.000001))) {
+        rt <- min(which(rec / n >= max(kvntl[i], 0.000001)))
+      } else {
+        rt <- "> 1000"
+      }
+      utmating[i, ] <- c(lt, rt) %+% " år"
     }
+    print.table(utmating, right = T)
+    
+#    for (i in kvntl) {
+#      if (any(ext / n >= max(i, 0.000001))) {
+#        lt <- min(which(ext / n >= max(i, 0.000001)))
+#      } else {
+#        lt <- ">1000"
+#      }
+#      cat("Levetidas " %+% (i * 100) %+% "-persentil: " %+% lt %+% " år\n")
+#    }
     
 #    if (is.null(fil)) {
 #      j <- 1
@@ -183,6 +203,6 @@ pva <- function(model,
 #    }
 #    ext <- extR
   }
-  invisible(ext)
+  invisible(list(extinction = ext, recovery = rec))
 }
 

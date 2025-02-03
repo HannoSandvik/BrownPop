@@ -13,8 +13,7 @@
 8. Vi må bli enig om
  - C
  - nboot
- - n(sim)
- 
+
 ...
 
 * Lineær eller logaritmisk y-akse?
@@ -34,44 +33,45 @@ Parametere som kan bort:
 - cov2=NULL
 - cov3=NULL
 - K=F
+- nsim=0
+- se=F
+- r=F
+- b1=F
+- b2=F
+- b3=F
+- mean1=F
+- mean2=F
+- mean3=F
+(pva)
+- cov1=NULL
+- cov2=NULL
+- cov3=NULL
 
 
 Parametere som kan fikseres:
 (popmod)
 - sd=0.1 #  demographic variance
 - nboot=10000
+- bootout=TRUE
 (pva)
 - C=20
 - n=10000
+- crash.year=NULL
+- tmax=NULL
+- fig=100
+- seed=NULL
 
 
 Parametere som trengs:
-(popmod) ############
+(popmod)
 + pop.size
 + years
-? nsim=0
+? plot=TRUE # fikseres eller tas bort
 ? name=""
-? plot=TRUE
-? se=F
-? r=F
-? b1=F
-? b2=F
-? b3=F
-? mean1=F
-? mean2=F
-? mean3=F
-? bootout=TRUE
-(pva) ############
+(pva)
 + model
-? crash.year=NULL
 ? crash.prop=0
-? cov1=NULL
-? cov2=NULL
-? cov3=NULL
-? tmax=NULL
-? fig=100
 ? fil=NULL
-? seed=NULL
 ? ...
 
 

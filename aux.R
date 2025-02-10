@@ -83,3 +83,36 @@ lg <- function(x) log10(x)
 # Avrunding til nærmeste heltall (men alltid oppover ved halve)
 int <- function(x) floor(x + 0.5) #¤ sjekk om jeg klarer meg uten!
 
+
+
+#¤¤¤¤¤
+
+heltall <- function(x, m = 6, n = 4) {
+  if (is.numeric(x)) x <- round(x)
+  x <-  as.character(x)
+  while(nchar(x) < m)           x <- " " %+%  x
+  while(nchar(x) < m + 1 + n)   x <-  x  %+% " "
+  return(x)
+}
+
+destall <- function(x, m = 6, n = 4, z = 3, des = ",") {
+  x <- round(as.numeric(x), z)
+  z <- min(z, n)
+  x <- unlist(strsplit(as.character(x), ".", fixed = T))
+  en <- x[1]
+  while(nchar(en) < m) en <- " " %+% en
+  to <- x[2]
+  if (is.na(to)) {
+    if (z %=% 0) {
+      to <- ""
+    } else {
+      to <- des %+% paste(rep("0", z), collapse = "")
+    }
+  } else {
+    while(nchar(to) < z)   to <- to %+% "0"
+    to <- des %+% to
+  }
+  while(nchar(to) < n + 1) to <- to %+% " "
+  return(en %+% to)
+}
+

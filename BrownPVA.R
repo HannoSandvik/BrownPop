@@ -222,13 +222,13 @@ BrownPVA <- function(pop.size,
   residual <- residual[-1]
   predicted <- predicted[-length(predicted)]
   demcomp <- sd / (exp(X)) #¤ N
-  res <- data.frame(years     = years,
-                    residual  = residual,
-                    demcomp   = demcomp, 
-                    predicted = predicted)
-  residual <- res$residual
-  demcomp <- res$demcomp
-  predicted <- res$predicted
+#  res <- data.frame(years     = years,
+#                    residual  = residual,
+#                    demcomp   = demcomp, 
+#                    predicted = predicted)
+#  residual <- res$residual
+#  demcomp <- res$demcomp
+#  predicted <- res$predicted
   names(predicted) <- names(demcomp) <- names(residual) <- years
 
   # ----------------------------------------------------------------------------
@@ -317,32 +317,32 @@ BrownPVA <- function(pop.size,
   
   n.par <- 2
   n.eff <- length(na.omit(predicted))
-  aic   <- 2 * (n.par - lnL)
+  aic   <- 2 * (n.par - lnL) #¤ enten vise eller droppe!
   aicc  <- aic + 2 * n.par * (n.par + 1) / (n.eff - n.par - 1)
 
-  res <- list(
-    "K" = NA,
-    "s" = my,
-    "sig2" = se,
-    "sigd" = sd,
-    "years" = years,
-    "N" = N,
-    "residuals" = residual, "predicted" = predicted, "demcomp" = demcomp,
-    "pred.r" = pred.r, "lci" = lci, "uci" = uci,
-    "bootout" = boottab, "boot" = bootres,
-    "model" = "Brownian", "name"=name,
-    "p.res.t" = p.res.t, "p.res.N" = p.res.N, "p.white" = p.white,
-    "lnL" = lnL, "r2" = r2, "aic" = aic, "aicc" = aicc
-  )
-  cat("\nParameter estimates:\n")
-  partab <- matrix(NA, 2, 3)
-  partab  [1,1]   <- res$s
-  partab  [1,2:3] <- res$boot[c("2.5%", "97.5%"), "r"]
-  partab  [2,1]   <- res$sig2
-  partab  [2,2:3] <- res$boot[c("2.5%", "97.5%"), "sig2e"]
-  rownames(partab) <- c("Popul. growth rate (r):", "Environmental variance:")
-  colnames(partab) <- c("Mean", "Lower 95% CI", "Upper 95% CI")
-  print(partab)
+#  res <- list(
+#    "K" = NA,
+#    "s" = my,
+#    "sig2" = se,
+#    "sigd" = sd,
+#    "years" = years,
+#    "N" = N,
+#    "residuals" = residual, "predicted" = predicted, "demcomp" = demcomp,
+#    "pred.r" = pred.r, "lci" = lci, "uci" = uci,
+#    "bootout" = boottab, "boot" = bootres,
+#    "model" = "Brownian", "name"=name,
+#    "p.res.t" = p.res.t, "p.res.N" = p.res.N, "p.white" = p.white,
+#    "lnL" = lnL, "r2" = r2, "aic" = aic, "aicc" = aicc
+#  )
+#  cat("\nParameter estimates:\n")
+#  partab <- matrix(NA, 2, 3)
+#  partab  [1,1]   <- res$s
+#  partab  [1,2:3] <- res$boot[c("2.5%", "97.5%"), "r"]
+#  partab  [2,1]   <- res$sig2
+#  partab  [2,2:3] <- res$boot[c("2.5%", "97.5%"), "sig2e"]
+#  rownames(partab) <- c("Popul. growth rate (r):", "Environmental variance:")
+#  colnames(partab) <- c("Mean", "Lower 95% CI", "Upper 95% CI")
+#  print(partab)
   
   cat("\n                          Persentiler:")
   cat("\n                        ")
@@ -396,14 +396,18 @@ BrownPVA <- function(pop.size,
 #  est[, 1:ncol(model$bootout)] <- model$bootout #¤ dette går enklere! est <- bootout! (eller boottab!)
   for (t in 1:tmax) {
     alive <- x > C
-    if (t %=% crash.year) x <- round(x * (1 - crash.prop))
-    x <- ln(x)
-    if (any(alive)) {
-      x[alive] <- round(exp(
-        x[alive] - 0.5 * sd * exp(-x[alive]) + boottab[alive, 1] +
-        sqrt(boottab[alive, 2] + sd * exp(-x[alive])) * rnorm(sum(alive))))
-    } else {
-      x <- rep(0, nboot)
+    if (crash.prop > 0 && t %=% crash.year) {
+      x <- round(x * (1 - crash.prop))
+    } else { #¤ Dette betyr at det ikke skjer noen annen endring enn selve crashet i år 1!
+             #¤ Mulig kan da bør begynne å telle fra og med år 2? (altså trekke fra 1?)
+      x <- ln(x)
+      if (any(alive)) {
+        x[alive] <- round(exp(
+          x[alive] - 0.5 * sd * exp(-x[alive]) + boottab[alive, 1] +
+          sqrt(boottab[alive, 2] + sd * exp(-x[alive])) * rnorm(sum(alive))))
+      } else {
+        x <- rep(0, nboot)
+      }
     }
     x[x <= C] <- 0
     utvalg[,    t] <- x[stikkpr]
@@ -417,8 +421,12 @@ BrownPVA <- function(pop.size,
     lines(years[last] + 1:tmax,         ln(na.und(utvalg[i,  ])),  col = grey(0.72))
   }
   for (i in 1:length(kvntl)) {
-    lines(years[last] + 0:1, c(X[last], ln(na.und(kvantiler[i, 1]))),
-          col = if (crash.prop > 0) "red" else "black")
+    y <- c(X[last], ln(na.und(kvantiler[i, 1])))
+    if (crash.prop > 0) {
+      lines(years[last] + 0:1, y, lwd = 2, col = "red")
+    } else {
+      lines(years[last] + 0:1, y)
+    }
     lines(years[last] + 1:tmax, ln(na.und(kvantiler[i, ])))
   }
   
@@ -457,7 +465,7 @@ BrownPVA <- function(pop.size,
   #      }
   #      cat("Levetidas " %+% (i * 100) %+% "-persentil: " %+% lt %+% " år\n")
   #    }
-  
+  #
   #    if (is.null(fil)) {
   #      j <- 1
   #      fil <- getwd() %+% "/pva" %+% j %+% ".R"

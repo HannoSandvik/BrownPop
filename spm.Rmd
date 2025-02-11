@@ -6,17 +6,14 @@
  - "returtid" (crash.year=1) eller 
  - begge deler eller
  - avhengig av modellen?
-4. Trengs andre tidsperspektiv for figuren enn 100 år?
-5. Ingen kovariater - korrekt?
-6. Skal figuren kunne lagres/modifiseres eller bare vises?
-7. Hvilke konfidensintervaller?
-8. Vi må bli enig om
+4. Skal figuren kunne lagres/modifiseres eller bare vises?
+5. Hvilke konfidensintervaller?
+6. Vi må bli enig om
  - C
  - nboot
 
 ...
 
-* Lineær eller logaritmisk y-akse?
 * Skal det være med tittel på datasettet?
 * Er det individer eller par/reir? (Viktig for C) [ind. for lomvi, ellers reir?]
 
@@ -42,7 +39,11 @@ Parametere som kan bort:
 - mean1=F
 - mean2=F
 - mean3=F
+- bootout=TRUE
+- plot=TRUE
 (pva)
+- model
+- n=10000
 - cov1=NULL
 - cov2=NULL
 - cov3=NULL
@@ -52,10 +53,8 @@ Parametere som kan fikseres:
 (popmod)
 - sd=0.1 #  demographic variance
 - nboot=10000
-- bootout=TRUE
 (pva)
 - C=20
-- n=10000
 - crash.year=NULL
 - tmax=NULL
 - fig=100
@@ -66,10 +65,8 @@ Parametere som trengs:
 (popmod)
 + pop.size
 + years
-? plot=TRUE # fikseres eller tas bort
 ? name=""
 (pva)
-+ model
 ? crash.prop=0
 ? fil=NULL
 ? ...

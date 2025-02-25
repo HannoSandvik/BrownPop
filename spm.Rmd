@@ -8,15 +8,17 @@
  - avhengig av modellen?
 4. Skal figuren kunne lagres/modifiseres eller bare vises?
 5. Hvilke konfidensintervaller?
-6. Vi må bli enig om
- - C
- - nboot
+6. Hvilken kvasiutdøingsterskel? 
+7. Hvilket antall simuleringer?
+8. Hvor kraftig kollaps? Flere scenarier?
+9. En eller flere R-funksjon(er)? - Én
 
-...
+Småting:
 
 * Skal det være med tittel på datasettet?
 * Er det individer eller par/reir? (Viktig for C) [ind. for lomvi, ellers reir?]
 
+---
 
 Det som kan varieres:
 (pva)

@@ -1,17 +1,18 @@
 
-1. Én eller flere funksjon(er)?
-2. På hvilket språk ønskes utmatinga?
-3. Skal den estimere utdøingstid og/eller restitusjonstid?
-4. Hvor kraftig kollaps? Flere scenarier?
-5. Trengs det modelldiagnostikk?
-6. Skal figuren vises?
-7. Skal figuren kunne lagres/modifiseres eller bare vises?
-8. Skal det være med tittel på datasettet?
-9. Er det individer eller par/reir? (Viktig for C) [ind. for lomvi, ellers reir?]
-10. Hvilke konfidensintervaller?
-11. Hvilken kvasiutdøingsterskel? 
-12. Hvilket antall simuleringer?
+1. Én eller flere funksjon(er)? - to (ta vare på simuleringene fra pop.mod.)
+2. På hvilket språk ønskes utmatinga? - engelsk
+3. Skal den estimere utdøingstid og/eller restitusjonstid? - begge
+4. Hvor kraftig kollaps? Flere scenarier? - bør være funksjonsargument
+5. Trengs det modelldiagnostikk? - nei
+6. Skal figuren vises? - ja
+7. Skal figuren kunne lagres/modifiseres eller bare vises? - bare vises
+8. Skal det være med tittel på datasettet? - ja
+9. Er det individer eller par/reir? (Viktig for C) [ind. for lomvi, ellers reir?] - henger sammen med 11
+10. Hvilke konfidensintervaller? - ikke helt klart ennå, foreløpig 5, 25, 50, 75, 95
+11. Hvilken kvasiutdøingsterskel? - må diskuteres mer (kanskje artsspesifikt)
+12. Hvilket antall simuleringer? - 
 
++ utmating med alle verdier for de svarte linjene
 
 
 ---

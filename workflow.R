@@ -9,3 +9,15 @@ krykkje.tall <- c(29498, 28207, 27086, 33589, NA, 25045, NA, 27355, 27070, 28827
 popmod <- BrownPop(krykkje.tall, 1980:2012, nboot = 10000, name = "Kittiwake")
 
 pva <- BrownPVA(popmod, crash.prop = 0.25)
+
+
+# ---------------------
+# Eller f.eks.:
+
+pva <- list()
+for (p in c(0, 0.05, 0.1, 0.25, 0.5)) {
+  pva[[paste0("PVA", p)]] <- BrownPVA(popmod, crash.prop = 0.25)
+}
+
+print(pva)
+

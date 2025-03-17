@@ -6,10 +6,10 @@
 
 
 
-BrownPop <- function(pop.size,       # time series with population sizes
-                     years = NULL,   # years of pop.size
-                     nboot = 10000,  # number of simulations - to be fixated!
-                     name = ""       # name of dataset
+BrownPop <- function(pop.size,      # time series with population sizes
+                     years = NULL,  # years of pop.size
+                     nboot = 100000,# number of simulations - to be fixated!
+                     name = ""      # name of dataset
                      ) {
   
   ##############################################################################
@@ -17,9 +17,9 @@ BrownPop <- function(pop.size,       # time series with population sizes
   
   # Constants ------------------------------------------------------------------
   # (These are former function arguments that have been fixated)
-  sd <- 0.1         # demographic variance
+  sd <- 0.1                              # demographic variance
   qntl <- c(0.05, 0.25, 0.5, 0.75, 0.95) # quantiles to be used in the output
-  seed <- NULL      # seed for the random number generator
+  seed <- NULL                           # seed for the random number generator
 
   
   # Functions ------------------------------------------------------------------
@@ -48,18 +48,9 @@ BrownPop <- function(pop.size,       # time series with population sizes
   "%+%" <- function(string1, string2) paste0(string1, string2)
   
   
-  # Pretty formatting of integers #¤
-  heltall <- function(x, m = 6, n = 4) {
-    if (is.numeric(x)) x <- round(x)
-    x <-  as.character(x)
-    while(nchar(x) < m)           x <- " " %+%  x
-    while(nchar(x) < m + 1 + n)   x <-  x  %+% " "
-    return(x)
-  }
-  
-  
-  # Pretty formatting of decimal numbers #¤
-  destall <- function(x, m = 6, n = 4, z = 3, des = ",") {
+  # Pretty formatting of decimal numbers
+  #¤ OBS: results in e.g. -3e-04.0000
+  decnum <- function(x, m = 6, n = 4, z = 3, des = ".") {
     x <- round(as.numeric(x), z)
     z <- min(z, n)
     x <- unlist(strsplit(as.character(x), ".", fixed = T))
@@ -82,14 +73,14 @@ BrownPop <- function(pop.size,       # time series with population sizes
   
   
   # Log-likelihood function of normal distribution
-  log.gauss <- function(X, my, sig2) -0.5*log(2*pi*sig2)-0.5*((X-my)^2)/sig2
+  log.gauss <- function(X, my, sig2) -0.5*ln(2*pi*sig2)-0.5*((X-my)^2)/sig2
   
 
   lik <- function(par) { # likelihood function
     L <- 0
     m  <- par[1]
     s  <- exp(par[2])
-    w  <- log(exp(X))
+    w  <- X
     my <- w - 0.5 * sd * exp(-w) + m
     s <- s + sd * exp(-w)
     L  <- L - sum(log.gauss(X[-1], my[-length(my)], s[-length(s)]), na.rm=T)
@@ -99,15 +90,15 @@ BrownPop <- function(pop.size,       # time series with population sizes
 
   estparam <- function(par) { # parameter estimation
     test <- optim(par, lik, 
-                 control = list(trace = F,
-                                maxit = 12000,
-                                beta = 0.1,
-                                gamma = 1.2))
+                  control = list(trace = F,
+                                 maxit = 12000,
+                                 beta = 0.1,
+                                 gamma = 1.2))
     return(test)
   }
 
 
-  simdat  <- function(i) { #¤
+  simdat  <- function(i) { # simulation of population trajectories
     xsim <- matrix(NA, length(i), length(X.orig))
     xsim[, 1] <- X.orig[1]
     for (j in 2:length(X.orig)) {
@@ -120,18 +111,18 @@ BrownPop <- function(pop.size,       # time series with population sizes
   }
   
   
-  portman.Q <- function (X, K = 10) { #¤
-    # portman.Q uses the cummulative ACF to test for whiteness  of a time series.
+  portman.Q <- function (X, K = 10) { # Portemanteau test for whiteness
+    # portman.Q uses the cumulative ACF to test for whiteness  of a time series.
     # This is the Ljung-Box version of the the Portemanteau  test for
     # whiteness (Tong 1990). It may in particular be  usefull to test
     # for whiteness in the residuals from time series models.
-    # 
     # A vector is returned consisting of the asymtpotic chi-square
     # value, the associated d.f. and asymptotic p.val for the test of
-    # whiteness. p.val < 0.05 -> non-whiteness!
-    # Tong, H. (1990) Non-linear time series : a dynamical  system approach. Clarendon Press, Oxford.
+    # whiteness.
+    # Tong, H. (1990) Non-linear time series : a dynamical  system approach. 
+    # Clarendon Press, Oxford.
     # Author: Ottar N. Bjornstad onb1@psu.edu
-    K <- min(K, length(na.omit(X)) - 1) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    K <- min(K, length(na.omit(X)) - 1)
     Q <- 0
     n <- length(X)
     p <- acf(X, plot = FALSE, lag.max = K, na.action=na.pass)$acf[2:(K + 1)]
@@ -142,31 +133,25 @@ BrownPop <- function(pop.size,       # time series with population sizes
   }
   
   
-  na.und <- function(x) ifelse(is.na(x), 1, ifelse(x < C, 1, x)) #¤ eller C?!
-  
-  
-  #risk <- function(m) 100 - c((sum(m[, 10] > C)) * 100 / nrow(m),
-  #                            (sum(m[, 20] > C)) * 100 / nrow(m), 
-  #                            (sum(m[,100] > C)) * 100 / nrow(m))
-  # utdøingssannsynlighet - brukes ikke per nå ¤
-  
-
   # Handling of input ----------------------------------------------------------
-  N <- pop.size #¤?!
+  N <- pop.size
   while (is.na(N[1]))         N <- N[-1]
   while (is.na(N[length(N)])) N <- N[-length(N)]
   
-  if (any(N < 1, na.rm = T)) stop ("Bestandsstørrelser kan ikke være mindre enn 1!") #¤
-  if (length(unique(na.omit(N[N > 1]))) < 9) stop ("For få år med data!") #¤
-  if (is.null(years)) stop(
-    "timepoints of data must be specified, if no NA's, try years=1:length(N)") #¤
+  if (any(N < 1, na.rm = T)) stop ("Population sizes cannot be smaller than 1!")
+  if (length(unique(na.omit(N[N > 1]))) < 9) stop ("Too few years of data!")
+  if (is.null(years)) {
+    years <- 1:length(N)
+    cat("\nNB: Years were not provided and are simply numbered from 1 to" %+%
+        length(N) %+% ".\n\n")
+  }
   if (length(years) %=% 1) {
     years <- years + (1:length(N)) - 1
-    cat("\nOBS: Årstallene er satt til " %+% min(years) %+% "-" %+% 
+    cat("\nNB: Years are assumed to be " %+% min(years) %+% "-" %+% 
                                              max(years) %+% ".\n\n")
   }
   if (years %!=% (min(years):max(years))) {
-    cat("\nOBS: Årstallene er ikke sammenhengende. Er det meningen?\n\n") #¤
+    cat("\nNB: The years provided are not consecutive. Is that by purpose?\n\n")
     NAs <- cbind(years, N)
     NAs <- merge(data.frame(years = min(years):max(years)), NAs, all.x = T)
     years <- NAs[, 1]
@@ -175,16 +160,11 @@ BrownPop <- function(pop.size,       # time series with population sizes
 
   # Definition of required variables -------------------------------------------
   X <- ln(N)
-  last <- length(N)
-  lastN <- N[last] #¤ + bruk den!
-  ###x   <- ln(N) #¤ + trengs ikke??!
   bootres <- psim <- NULL
   predicted <- residual <- demcomp <- X
   pred.r <- lci <- uci <- X
   p.res.t <- p.res.N <- p.white <- 1
   names(N) <- years
-  NAs <- is.na(X) #¤ er ikke i bruk!
-
   X.orig <- X
   par <- c(pi / 100, -2)
 
@@ -198,41 +178,29 @@ BrownPop <- function(pop.size,       # time series with population sizes
   my  <-     estimat$par[1]
   se  <- exp(estimat$par[2])
   lnL     <-    -estimat$value
-  if (estimat$convergence) { #¤
-    cat("\n##########################################" %+%
-        "\nOBS: Optimaliseringa konvergerte ikke!!!!!" %+%
-        "\n##########################################\n")
+  if (estimat$convergence) {
+    cat("\nNB: The optimalisation did not converge!\n\n")
   }
   
-  ww <- log(exp(X)) #¤ = X?!
-  predicted <- c(NA, ww + my - 0.5 * sd * exp(-ww))
+  predicted <- c(NA, X + my - 0.5 * sd / N)
   residual <-  c(X, NA) - predicted
   residual <- residual[-1]
   predicted <- predicted[-length(predicted)]
-  demcomp <- sd / (exp(X)) #¤ N
-#  res <- data.frame(years     = years,
-#                    residual  = residual,
-#                    demcomp   = demcomp, 
-#                    predicted = predicted)
-#  residual <- res$residual
-#  demcomp <- res$demcomp
-#  predicted <- res$predicted
+  demcomp <- sd / N
   names(predicted) <- names(demcomp) <- names(residual) <- years
 
-  # ----------------------------------------------------------------------------
-  
   r2 <- NA
-  pred.r <- my - 0.5 * sd * exp(-X)
+  pred.r <- my - 0.5 * sd / N
   r2 <- summary(lm(diff(X) ~ pred.r[-length(X)]))$r.sq
   uci <- lci <- NA
   for (j in 1:(length(pred.r))) {
-    lci[j] <- pred.r[j] + sqrt(se + sd * exp(-X[j])) * qnorm(0.025)
-    uci[j] <- pred.r[j] + sqrt(se + sd * exp(-X[j])) * qnorm(0.975)
+    lci[j] <- pred.r[j] + sqrt(se + sd / N[j]) * qnorm(0.025)
+    uci[j] <- pred.r[j] + sqrt(se + sd / N[j]) * qnorm(0.975)
   }
   names(pred.r) <- names(lci) <- names(uci) <- years
 
   ##############################################################################
-  # parametric bootstrapping
+  # Parametric bootstrapping
 
   if (nboot > 0) {
     cat("bootstrapping\n")
@@ -240,8 +208,8 @@ BrownPop <- function(pop.size,       # time series with population sizes
     boottab <- matrix(NA, nboot, 2)
     
     xsim <- simdat(1:nboot)
-    # Om de simulerte forløpene går altfor fort mot null, blir det umulig å esti-
-    # mere parameterne. For å forebygge krøll, erstattes de av nye simuleringer:
+    # If the simulated trajectories approach zero too soon, it become inmpossible
+    # to estimate the parameters. To avoid this situation, new simulations are done:
     nuller   <- apply(xsim > 0, 1, sum, na.rm = T) < 6
     while(any(nuller)) {
       xsim[which(nuller), ] <- simdat(which(nuller))
@@ -255,18 +223,13 @@ BrownPop <- function(pop.size,       # time series with population sizes
       boottab[j, ] <- estimat$par
     }
     boottab[, 2] <- exp(boottab[, 2])
-    bootres <- matrix(NA, 18, 2)
-    rownames(bootres) <- c("min", "0.05%", "0.1%", "0.5%", "1%", "2.5%",
-                           "5%", "25%", "median", "75%", "95%", "97.5%", "99%", 
-                           "99.5%", "99.9%", "99.95%", "max", "mean")
+    bootres <- matrix(NA, length(qntl) + 1, 2)
+    rownames(bootres) <- c((qntl * 100) %+% "%", "mean")
     colnames(bootres) <- c("r", "sig2e")
     for (j in 1:ncol(bootres)) {
-      bootres[1:17, j] <- quantile(boottab[, j], 
-                                   c(0, 0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 
-                                     0.25, 0.5, 0.75, 0.95, 0.975, 0.99, 0.995, 
-                                     0.999, 0.9995, 1), na.rm = T)
-      bootres[18, j] <- mean(boottab[, j], na.rm = T)
-    } #¤ nei, bruk qntl!
+      bootres[1:length(qntl), j] <- quantile(boottab[, j], qntl, na.rm = T)
+      bootres[1+length(qntl), j] <- mean(boottab[, j], na.rm = T)
+    }
   }
   X <- X.orig
 
@@ -276,39 +239,38 @@ BrownPop <- function(pop.size,       # time series with population sizes
   lmfit <- lm(residual ~ years, na.action = "na.exclude")
   p.res.t <- signif(anova(lmfit)[1,5],3)
   if (p.res.t < 0.05) {
-    cat("\nOBS: Residualene har en " %+% ifelse(p.res.t < 0.01, "utprega ", "") %+% 
-        ifelse(coef(lmfit)[[2]] > 0, "posi", "nega") %+% "tiv trend (p = " %+%
+    cat("\nNB: The residuals have a " %+% ifelse(p.res.t < 0.01, "marked ", "") %+% 
+        ifelse(coef(lmfit)[[2]] > 0, "posi", "nega") %+% "tive trend (p = " %+%
         format(p.res.t, dig=2, sci=F, dec=",") %+% ").\n")
   }
   lmfit <- lm(residual ~ N, na.action = "na.exclude")
   p.res.N <- signif(anova(lmfit)[1, 5], 3)
   tetth <- coef(lmfit)[[2]] < 0
   if (p.res.N < 0.05) {
-    cat("\nOBS: Residualene er " %+% ifelse(p.res.t < 0.01, "sterkt ", "") %+% 
-        ifelse(tetth, "nega", "posi") %+% "tivt korrelert med bestandsstø" %+%
-        "rrelsen (p = " %+% format(p.res.N, dig=2, sci=F, dec=",") %+% ").\n")
+    cat("\nNB: The residuals are " %+% ifelse(p.res.t < 0.01, "strongly ", "") %+% 
+        ifelse(tetth, "nega", "posi") %+% "tively correlated with population " %+%
+        "size (p = " %+% format(p.res.N, dig=2, sci=F, dec=",") %+% ").\n")
     if (tetth) {
-      cat("Det indikerer at en tetthetsavhengig modell " %+% ifelse(
-        p.res.t < 0.01, "er et bedre valg!\n", "kan være et bedre valg.\n"))
+      cat("This indicates that a density-dependent model " %+% ifelse(
+        p.res.t < 0.01, "is", "might be") %+% " a better choice!\n")
     }
   }
   p.white <- portman.Q(residual)[[3]]
   if (p.white < 0.05) {
-    cat("\nOBS: Residualene avviker " %+% ifelse(p.white < 0.01, "sterkt ", "") %+% 
-        "fra en antagelse om hvit støy (p = " %+% 
-        format(p.white, dig=2, sci=F, dec=",") %+% ").\n")
+    cat("\nNB: The residuals deviate " %+% ifelse(p.white<0.01,"strongly ","") %+% 
+        "from the assumption of whiteness (p = " %+% 
+        format(p.white, dig=2, sci=F, dec=".") %+% ").\n")
   }
-  #¤ merk at her brukes komma som desimaltegn
 
   ##############################################################################
-  # ¤¤ forhenværende avslutning av modellfunksjonen - må ryddes!
+  # Output
   
   n.par <- 2
   n.eff <- length(na.omit(predicted))
-  aic   <- 2 * (n.par - lnL) #¤ enten vise eller droppe!
+  aic   <- 2 * (n.par - lnL)
   aicc  <- aic + 2 * n.par * (n.par + 1) / (n.eff - n.par - 1)
 
-  res <- list( #¤ den må gjenngås grundig!
+  res <- list(
     "K" = NA,
     "s" = my,
     "sig2e" = se,
@@ -323,19 +285,20 @@ BrownPop <- function(pop.size,       # time series with population sizes
     "lnL" = lnL, "r2" = r2, "aic" = aic, "aicc" = aicc
   )
 
-  cat("\n                          Persentiler:")
+  cat("\n                          Percentiles:")
   cat("\n                        ")
   for (i in qntl) {
-    cat("  " %+% destall(i * 100, z = 1))
+    cat("  " %+% decnum(i * 100, z = 1))
   }
-  cat("\nPopulasjonsmodell...")
-  cat("\nBestandsvekstrate (r):  ")
-  for (i in c(6, 8, 9, 10, 12)) cat("  " %+% destall(    bootres[i, 1], 
-                                    z = 2 - floor(lg(abs(bootres[9, 1])))))
-  cat("\nMiljøvarians (sigma-e): ")
-  for (i in c(6, 8, 9, 10, 12)) cat("  " %+% destall(    bootres[i, 2], 
-                                    z = 2 - floor(lg(abs(bootres[9, 2])))))
-
+  cat("\nPopulation model...")
+  cat("\nPopul. growth rate (r): ")
+  for (i in qntl) cat("  " %+% decnum(bootres[(i * 100) %+% "%", 1], 
+                                      z = 2 - floor(lg(abs(bootres["50%", 1])))))
+  cat("\nEnvironmental variance: ")
+  for (i in qntl) cat("  " %+% decnum(bootres[(i * 100) %+% "%", 2], 
+                                      z = 2 - floor(lg(abs(bootres["50%", 2])))))
+  cat("\n")
+  
   invisible(res)
 }
 

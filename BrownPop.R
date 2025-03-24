@@ -1,35 +1,32 @@
-##########
-# BrownPop
-##########
 
-# Brownian population model
-
-
-
-BrownPop <- function(pop.size,      # time series with population sizes
-                     years = NULL,  # years of pop.size
-                     nboot = 100000,# number of simulations - to be fixated!
-                     name = ""      # name of dataset
+########
+BrownPop <- function(
+########
+                     pop.size,        # time series with population sizes
+                     years = NULL,    # years of pop.size
+                     nboot = 100000,  # number of simulations - to be fixated!
+                     name = ""        # name of dataset
                      ) {
   
+  # Brownian population model
+  # =========================
+  # Code written by Hanno Sandvik, Norwegian Institute for Nature Research, 2025,
+  # based on code by Vidar Grøtan, Norwegian University of Science and Technology 
+
+    
   ##############################################################################
   # Preparations
   
   # Constants ------------------------------------------------------------------
   # (These are former function arguments that have been fixated)
-  sd <- 0.1                              # demographic variance
-  qntl <- c(0.05, 0.25, 0.5, 0.75, 0.95) # quantiles to be used in the output
-  seed <- NULL                           # seed for the random number generator
+  sd <- 0.1                               # demographic variance
+  qntl <- c(0.05, 0.25, 0.5, 0.75, 0.95)  # quantiles to be used in the output
+  seed <- NULL                            # seed for the random number generator
 
-  
   # Functions ------------------------------------------------------------------
 
   # Natural logarithm should be abbreviated as "ln"!
   ln <- function(x) log(x)
-  
-  
-  # Decadal logarithm should be abbreviated as "lg"!
-  lg <- function(x) log10(x)
   
   
   # Tests equality of arguments - insensitive to rounding error!
@@ -40,36 +37,8 @@ BrownPop <- function(pop.size,      # time series with population sizes
   }
   
   
-  # Tests inequality of arguments - insensitive to rounding error!
-  "%!=%" <- function(arg1, arg2) !(arg1 %=% arg2)
-  
-  
   # Combines text variables into one string
   "%+%" <- function(string1, string2) paste0(string1, string2)
-  
-  
-  # Pretty formatting of decimal numbers
-  #¤ OBS: results in e.g. -3e-04.0000
-  decnum <- function(x, m = 6, n = 4, z = 3, des = ".") {
-    x <- round(as.numeric(x), z)
-    z <- min(z, n)
-    x <- unlist(strsplit(as.character(x), ".", fixed = T))
-    en <- x[1]
-    while(nchar(en) < m) en <- " " %+% en
-    to <- x[2]
-    if (is.na(to)) {
-      if (z %=% 0) {
-        to <- ""
-      } else {
-        to <- des %+% paste(rep("0", z), collapse = "")
-      }
-    } else {
-      while(nchar(to) < z)   to <- to %+% "0"
-      to <- des %+% to
-    }
-    while(nchar(to) < n + 1) to <- to %+% " "
-    return(en %+% to)
-  }
   
   
   # Log-likelihood function of normal distribution
@@ -102,6 +71,7 @@ BrownPop <- function(pop.size,      # time series with population sizes
     xsim <- matrix(NA, length(i), length(X.orig))
     xsim[, 1] <- X.orig[1]
     for (j in 2:length(X.orig)) {
+      # A stochastic Brownian model is used to simulate population sizes
       xsim[, j] <- xsim[, j - 1] - 0.5 * sd * exp(-xsim[, j - 1]) + my -
         sqrt(se + sd * exp(-xsim[, j - 1])) * rnorm(length(i))
       xsim[xsim[, j] < 0, j] <- 0
@@ -116,12 +86,9 @@ BrownPop <- function(pop.size,      # time series with population sizes
     # This is the Ljung-Box version of the the Portemanteau  test for
     # whiteness (Tong 1990). It may in particular be  usefull to test
     # for whiteness in the residuals from time series models.
-    # A vector is returned consisting of the asymtpotic chi-square
-    # value, the associated d.f. and asymptotic p.val for the test of
-    # whiteness.
-    # Tong, H. (1990) Non-linear time series : a dynamical  system approach. 
+    # Tong, H. (1990) Non-linear time series: a dynamical  system approach. 
     # Clarendon Press, Oxford.
-    # Author: Ottar N. Bjornstad onb1@psu.edu
+    # Author: Ottar N. Bjørnstad, onb1@psu.edu
     K <- min(K, length(na.omit(X)) - 1)
     Q <- 0
     n <- length(X)
@@ -150,7 +117,7 @@ BrownPop <- function(pop.size,      # time series with population sizes
     cat("\nNB: Years are assumed to be " %+% min(years) %+% "-" %+% 
                                              max(years) %+% ".\n\n")
   }
-  if (years %!=% (min(years):max(years))) {
+  if (!(years %=% (min(years):max(years)))) {
     cat("\nNB: The years provided are not consecutive. Is that by purpose?\n\n")
     NAs <- cbind(years, N)
     NAs <- merge(data.frame(years = min(years):max(years)), NAs, all.x = T)
@@ -161,15 +128,15 @@ BrownPop <- function(pop.size,      # time series with population sizes
   # Definition of required variables -------------------------------------------
   X <- ln(N)
   bootres <- psim <- NULL
-  predicted <- residual <- demcomp <- X
-  pred.r <- lci <- uci <- X
+  predicted <- residual <- X
   p.res.t <- p.res.N <- p.white <- 1
   names(N) <- years
   X.orig <- X
   par <- c(pi / 100, -2)
 
-  set.seed(seed)
+  set.seed(seed) # initiates the random seed generator
 
+  
   ##############################################################################
   # Parameter estimation
 
@@ -186,27 +153,21 @@ BrownPop <- function(pop.size,      # time series with population sizes
   residual <-  c(X, NA) - predicted
   residual <- residual[-1]
   predicted <- predicted[-length(predicted)]
-  demcomp <- sd / N
-  names(predicted) <- names(demcomp) <- names(residual) <- years
+  names(predicted) <- names(residual) <- years
 
   r2 <- NA
   pred.r <- my - 0.5 * sd / N
   r2 <- summary(lm(diff(X) ~ pred.r[-length(X)]))$r.sq
-  uci <- lci <- NA
-  for (j in 1:(length(pred.r))) {
-    lci[j] <- pred.r[j] + sqrt(se + sd / N[j]) * qnorm(0.025)
-    uci[j] <- pred.r[j] + sqrt(se + sd / N[j]) * qnorm(0.975)
-  }
-  names(pred.r) <- names(lci) <- names(uci) <- years
 
+  
   ##############################################################################
   # Parametric bootstrapping
 
+  # These simulations are needed to estimate the uncertainties of the parameters
+  # (population growth rate and environmental variance)
   if (nboot > 0) {
-    cat("bootstrapping\n")
-    catval <- c(1, seq(0, nboot, nboot / 10))
     boottab <- matrix(NA, nboot, 2)
-    
+    # Simulate population trajectories based on the parameter estimates:
     xsim <- simdat(1:nboot)
     # If the simulated trajectories approach zero too soon, it become inmpossible
     # to estimate the parameters. To avoid this situation, new simulations are done:
@@ -217,15 +178,17 @@ BrownPop <- function(pop.size,      # time series with population sizes
     }
 
     for (j in 1:nboot) {
-      if (any(j == catval)) cat("boot", j, "of", nboot, "\n")
+      # Re-estimate the parameters for each of the simulated trajectories:
       X <- xsim[j, ]
       estimat <- estparam(par)
       boottab[j, ] <- estimat$par
+      cat("Bootstrapping: " %+% floor(100 * j / nboot) %+% "% done.\r")
     }
+    cat("\n")
     boottab[, 2] <- exp(boottab[, 2])
     bootres <- matrix(NA, length(qntl) + 1, 2)
-    rownames(bootres) <- c((qntl * 100) %+% "%", "mean")
-    colnames(bootres) <- c("r", "sig2e")
+    rownames(bootres) <- c((qntl * 100) %+% "-percentile", "mean")
+    colnames(bootres) <- c("r", "sigma2e")
     for (j in 1:ncol(bootres)) {
       bootres[1:length(qntl), j] <- quantile(boottab[, j], qntl, na.rm = T)
       bootres[1+length(qntl), j] <- mean(boottab[, j], na.rm = T)
@@ -233,9 +196,11 @@ BrownPop <- function(pop.size,      # time series with population sizes
   }
   X <- X.orig
 
+  
   ##############################################################################
   # Model testing
 
+  # Results of these tests are displayed only if a model assumption may be violated: 
   lmfit <- lm(residual ~ years, na.action = "na.exclude")
   p.res.t <- signif(anova(lmfit)[1,5],3)
   if (p.res.t < 0.05) {
@@ -262,8 +227,17 @@ BrownPop <- function(pop.size,      # time series with population sizes
         format(p.white, dig=2, sci=F, dec=".") %+% ").\n")
   }
 
+  
   ##############################################################################
   # Output
+  
+  cat("\nBrownian population model:")
+  cat("\n==========================\n\n")
+  cat("* Population growth rate (r):\n\n")
+  print(bootres[1:length(qntl), 1])
+  cat("\n* Environmental variance:\n\n")
+  print(bootres[1:length(qntl), 2])
+  cat("\n")
   
   n.par <- 2
   n.eff <- length(na.omit(predicted))
@@ -271,40 +245,27 @@ BrownPop <- function(pop.size,      # time series with population sizes
   aicc  <- aic + 2 * n.par * (n.par + 1) / (n.eff - n.par - 1)
 
   res <- list(
-    "K" = NA,
-    "s" = my,
-    "sig2e" = se,
-    "sig2d" = sd,
-    "years" = years,
-    "N" = N,
-    "residuals" = residual, "predicted" = predicted, "demcomp" = demcomp,
-    "pred.r" = pred.r, "lci" = lci, "uci" = uci,
-    "bootout" = boottab, "boot" = bootres,
-    "model" = "Brownian", "name" = name,
-    "p.res.t" = p.res.t, "p.res.N" = p.res.N, "p.white" = p.white,
-    "lnL" = lnL, "r2" = r2, "aic" = aic, "aicc" = aicc
+    "K" = NA,                 # carrying capacity (NA for Brownian models)
+    "s" = my,                 # estimate of intrinsic population growth rate
+    "sig2e" = se,             # estimate of environmental variance
+    "sig2d" = sd,             # assumed demographic variance
+    "years" = years,          # years of observation
+    "N" = N,                  # observed  population sizes
+    "predicted" = predicted,  # predicted population sizes
+    "residuals" = residual,   # residual  population sizes
+    "bootout" = boottab,      # matrix with simulated values for each parameter
+    "boot" = bootres,         # matrix of quantiles for parameters estimated
+    "model" = "Brownian",     # type of population model
+    "name" = name,            # name of dataset
+    "p.res.t" = p.res.t,      # p-value of correlation between residuals and year
+    "p.res.N" = p.res.N,      # p-value of correlation between residuals and N
+    "p.white" = p.white,      # p-value of correlation of test for whiteness
+    "lnL" = lnL,              # log-likelihood of the model
+    "r2" = r2,                # variance explained by the model (R^2)
+    "aic" = aic,              # Akaike's Information Criterion (AIC) of the model
+    "aicc" = aicc             # AIC corrected for small sample size
   )
 
-  cat("\n                          Percentiles:")
-  cat("\n                        ")
-  for (i in qntl) {
-    cat("  " %+% decnum(i * 100, z = 1))
-  }
-  cat("\nPopulation model...")
-  cat("\nPopul. growth rate (r): ")
-  for (i in qntl) cat("  " %+% decnum(bootres[(i * 100) %+% "%", 1], 
-                                      z = 2 - floor(lg(abs(bootres["50%", 1])))))
-  cat("\nEnvironmental variance: ")
-  for (i in qntl) cat("  " %+% decnum(bootres[(i * 100) %+% "%", 2], 
-                                      z = 2 - floor(lg(abs(bootres["50%", 2])))))
-  cat("\n")
-  
+  # The output is a list (see above)
   invisible(res)
 }
-
-
-
-
-
-
-

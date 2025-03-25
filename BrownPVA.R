@@ -202,8 +202,33 @@ BrownPVA <- function(
   }
   extinct <- apply(EXT, 2:3, mean)  # mean across subsets
   recover <- apply(REC, 2:3, mean)  # mean across subsets
-  extinct[apply(EXT, 2:3, max) == 1000] <- 1000  # to avoid spurious averages
-  recover[apply(REC, 2:3, max) == 1000] <- 1000  # to avoid spurious averages
+  # The averaging approach does not work if any estimate equals tmax! Therefore:
+  ext <- apply(ext, 2:3, sum)
+  rec <- apply(rec, 2:3, sum)
+  for (i in 1:length(qntl)) {
+    for (j in 1:nmort) {
+      if (any(EXT[, j, i] == tmax)) { # replace the estimate if any value is tmax
+        if (any(ext[j, ] / nboot >= max(qntl[i], 0.000001))) {
+          # identifying the year in which the proportion of simulated trajectories 
+          # that have gone extinct equals the quantile:
+          extinct[j, i] <- min(which(ext[j, ] / nboot >= 
+                                     max(qntl[i], 0.000001)))
+        } else {
+          extinct[j, i] <- tmax
+        }
+      }
+      if (any(REC[, j, i] == tmax)) { # replace the estimate if any value is tmax
+        if (any(rec[j, ] / nboot >= max(qntl[i], 0.000001))) {
+          # identifying the year in which the proportion of simulated trajectories 
+          # that have recovered equals the quantile:
+          recover[j, i] <- min(which(rec[j, ] / nboot >=
+                                     max(qntl[i], 0.000001)))
+        } else {
+          recover[j, i] <- tmax
+        }
+      }
+    }
+  }
 
   cat("* Population lifetime (time to quasi-exinction in years):\n\n")
   print(extinct)
@@ -234,6 +259,5 @@ BrownPVA <- function(
                  RecoveryTime = recover,
                  Trajectories = Q))
 }
-
 
 

@@ -9,8 +9,8 @@
 8. Skal det være med tittel på datasettet? - ja - OK
 9. Er det individer eller par/reir? (Viktig for C) [ind. for lomvi, ellers reir?] - henger sammen med 11
 10. Hvilke konfidensintervaller? - ikke helt klart ennå, foreløpig 5, 25, 50, 75, 95
-11. Hvilken kvasiutdøingsterskel? - må diskuteres mer (kanskje artsspesifikt)
-12. Hvilket antall simuleringer? - minst 1e5 - greit med 1e5?
+11. Hvilken kvasiutdøingsterskel? - 20 - OK
+12. Hvilket antall simuleringer? - minst 1e5 - OK
 
 Ønsker:
 + utmating med alle verdier for de svarte linjene - OK

@@ -2,10 +2,9 @@
 ########
 BrownPop <- function(
 ########
-                     pop.size,        # time series with population sizes
-                     years = NULL,    # years of pop.size
-                     nboot = 100000,  # number of simulations - to be fixated!
-                     name = ""        # name of dataset
+                     pop.size,      # time series with population sizes
+                     years = NULL,  # years of pop.size
+                     name = ""      # name of dataset
                      ) {
   
   # Brownian population model
@@ -18,9 +17,9 @@ BrownPop <- function(
   # Preparations
   
   # Constants ------------------------------------------------------------------
-  # (These are former function arguments that have been fixated)
   sd <- 0.1                               # demographic variance
   qntl <- c(0.05, 0.25, 0.5, 0.75, 0.95)  # quantiles to be used in the output
+  nboot <- 100000                         # number of simulations
   seed <- NULL                            # seed for the random number generator
 
   # Functions ------------------------------------------------------------------
@@ -269,3 +268,8 @@ BrownPop <- function(
   # The output is a list (see above)
   invisible(res)
 }
+
+
+
+
+

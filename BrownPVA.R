@@ -2,9 +2,8 @@
 ########
 BrownPVA <- function(
 ########  
-                     pop.model,      # output from BrownPop
-                     mortality = 0,  # proportion of population that dies in crash
-                     C = 20          # quasi-extinction threshold - to be fixated!
+                     pop.model,     # output from BrownPop
+                     mortality = 0  # proportion of population that dies in crash
                      ) {
   
   # Brownian population viability analysis
@@ -16,12 +15,10 @@ BrownPVA <- function(
   # Preparations
   
   # Constants ------------------------------------------------------------------
-  # (including former function arguments that have been fixated)
   qntl <- c(0.05, 0.25, 0.5, 0.75, 0.95) # quantiles to be used in the output
-  mort.year <- 0   # in which years of simulations does the collapse happen ¤ needed??!
-  # C <- 20          # quasi-extinction threshold
+  C    <-   20     # quasi-extinction threshold
   tmax <- 1000     # maximum number of years to simulate population trajectories
-  tfig <- 100      # number of years of population trajectories shown in graph
+  tfig <-  100     # number of years of population trajectories shown in graph
   nlines <- 25     # number of random population trajectories shown in graph
   
   # Functions ------------------------------------------------------------------
@@ -259,5 +256,8 @@ BrownPVA <- function(
                  RecoveryTime = recover,
                  Trajectories = Q))
 }
+
+
+
 
 
